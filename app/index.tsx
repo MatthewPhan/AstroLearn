@@ -13,10 +13,15 @@ export default function Index() {
         type: "application/pdf",
         copyToCacheDirectory: true,
       });
+      console.log("File Picker Result:", JSON.stringify(result, null, 2));
+      
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        const file = result.assets[0];
+        const fileName = file.name || "Unknown File Name";
+        const fileUri = file.uri || "Unknown File URI";
 
-      if (result) {
         setUploadedFile(result);
-        Alert.alert("File Uploaded", `File Name: ${result.name}`);
+        Alert.alert("File Uploaded", `File Name: ${fileName}`);
         console.log("Uploaded File:", result);
       } else {
         console.log("File upload canceled");
@@ -33,7 +38,6 @@ export default function Index() {
       return;
     }
     console.log(`Generating ${questions} questions for ${days} days`);
-    console.log("Using file:", uploadedFile.name);
   };
 
   return (
