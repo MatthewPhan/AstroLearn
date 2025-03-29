@@ -7,7 +7,8 @@ import { useNavigation } from "@react-navigation/native";
 import QuestionPage from "./QuestionPage";
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
-type RootStackParamList = {
+export type RootStackParamList = {
+  Splash: undefined;
   Home: undefined;
   StatisticsPage: {
     totalTime: string;
