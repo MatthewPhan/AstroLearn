@@ -3,6 +3,9 @@ import { View, Text, Button, TextInput, TouchableOpacity, StyleSheet, Alert, Scr
 import * as DocumentPicker from "expo-document-picker";
 import * as FileSystem from "expo-file-system";
 import axios from 'axios';
+import { useNavigation } from "@react-navigation/native";
+import QuestionPage from "./QuestionPage";
+
 
 export default function Index() {
   const [questions, setQuestions] = useState(0);
@@ -12,6 +15,8 @@ export default function Index() {
   const [isLoading, setIsLoading] = useState(false);
   const [apiResponse, setApiResponse] = useState<any>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [viewingFlashcards, setViewingFlashcards] = useState(false);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
 
   const handleFileUpload = async () => {
     try {
@@ -208,13 +213,49 @@ Each question should test understanding of key concepts from the document and ha
       );
     } catch (error) {
       console.error("Error in handleGenerate:", error);
-      setErrorMessage(error.message || "An unknown error occurred");
-      Alert.alert("Error", error.message || "Failed to generate questions. Please try again.");
+      if (error instanceof Error) {
+        setErrorMessage(error.message);
+      } else {
+        setErrorMessage("An unknown error occurred");
+      }
+      const errorMessage = error instanceof Error ? error.message : "Failed to generate questions. Please try again.";
+      Alert.alert("Error", errorMessage);
     } finally {
       setIsLoading(false);
     }
   };
-  
+
+  const handleViewFlashcards = () => {
+    if (!apiResponse || !apiResponse.questions || apiResponse.questions.length === 0) {
+      Alert.alert("No Questions", "Please generate questions first.");
+      return;
+    }
+
+    // Start viewing flashcards
+    setViewingFlashcards(true);
+    setCurrentQuestionIndex(0);
+  };
+
+  const handleNextQuestion = () => {
+    setCurrentQuestionIndex((prevIndex) => Math.min(prevIndex + 1, apiResponse.questions.length - 1));
+  };
+
+  const handlePreviousQuestion = () => {
+    setCurrentQuestionIndex((prevIndex) => Math.max(prevIndex - 1, 0));
+  };
+
+  if (viewingFlashcards) {
+    return (
+      <QuestionPage
+        question={apiResponse.questions[currentQuestionIndex]}
+        onNext={handleNextQuestion}
+        onPrevious={handlePreviousQuestion}
+        currentIndex={currentQuestionIndex}
+        totalQuestions={apiResponse.questions.length}
+      />
+    );
+  }
+
   return (
     <ScrollView contentContainerStyle={styles.scrollContainer}>
       <View style={styles.container}>
@@ -251,7 +292,7 @@ Each question should test understanding of key concepts from the document and ha
         
         {uploadedFile && (
           <Text style={styles.fileInfo}>
-            Uploaded: {uploadedFile.assets[0].name}
+            Uploaded: {uploadedFile?.assets?.[0]?.name || "No file name available"}
           </Text>
         )}
         
@@ -262,6 +303,10 @@ Each question should test understanding of key concepts from the document and ha
           <Text style={styles.buttonText}>
             {isLoading ? "Generating..." : "Generate Questions"}
           </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.viewButton} onPress={handleViewFlashcards}>
+          <Text style={styles.buttonText}>View Flashcards</Text>
         </TouchableOpacity>
         
         {/* Show loading indicator */}
@@ -288,28 +333,19 @@ Each question should test understanding of key concepts from the document and ha
             {/* Display the questions in a readable format */}
             {apiResponse.questions && apiResponse.questions.length > 0 ? (
               <View style={styles.questionsContainer}>
-                {apiResponse.questions.map((q, index) => (
+                {apiResponse.questions.map((q: { questionText: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; options: { A: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; B: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; C: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; D: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; }; correctAnswer: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; }, index: React.Key | null | undefined) => (
                   <View key={index} style={styles.questionCard}>
-                    <Text style={styles.questionText}>Q{index+1}: {q.questionText}</Text>
+                    <Text style={styles.questionText}>Q{(typeof index === 'number' ? index + 1 : 0)}: {q.questionText}</Text>
                     <Text style={styles.optionText}>A: {q.options.A}</Text>
                     <Text style={styles.optionText}>B: {q.options.B}</Text>
                     <Text style={styles.optionText}>C: {q.options.C}</Text>
                     <Text style={styles.optionText}>D: {q.options.D}</Text>
-                    <Text style={styles.correctAnswer}>Correct: {q.correctAnswer}</Text>
                   </View>
                 ))}
               </View>
             ) : (
               <Text style={styles.noQuestionsText}>No questions found in the response.</Text>
             )}
-            
-            {/* Raw JSON for reference */}
-            <Text style={styles.jsonTitle}>Raw JSON Response:</Text>
-            <ScrollView style={styles.jsonContainer}>
-              <Text style={styles.jsonText}>
-                {JSON.stringify(apiResponse, null, 2)}
-              </Text>
-            </ScrollView>
           </View>
         )}
         
@@ -503,6 +539,11 @@ const styles = StyleSheet.create({
   debugText: {
     fontSize: 12,
     color: '#0d47a1',
+  },
+  viewButton: {
+    backgroundColor: "#007BFF",
+    padding: 10,
+    borderRadius: 5,
   },
 });
 
