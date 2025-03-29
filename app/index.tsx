@@ -1,18 +1,39 @@
 import React, { useState } from "react";
-import { View, Text, Button, TextInput, TouchableOpacity, StyleSheet } from "react-native";
+import { View, Text, Button, TextInput, TouchableOpacity, StyleSheet, Alert } from "react-native";
+import * as DocumentPicker from "expo-document-picker";
 
 export default function Index() {
   const [questions, setQuestions] = useState(0);
   const [days, setDays] = useState(0);
+  const [uploadedFile, setUploadedFile] = useState<DocumentPicker.DocumentPickerResult | null>(null);
 
-  const handleFileUpload = () => {
-    // Logic for file upload
-    console.log("File uploaded");
+  const handleFileUpload = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: "application/pdf",
+        copyToCacheDirectory: true,
+      });
+
+      if (result) {
+        setUploadedFile(result);
+        Alert.alert("File Uploaded", `File Name: ${result.name}`);
+        console.log("Uploaded File:", result);
+      } else {
+        console.log("File upload canceled");
+      }
+    } catch (error) {
+      console.error("Error uploading file:", error);
+      Alert.alert("Error", "An error occurred while uploading the file.");
+    }
   };
 
   const handleGenerate = () => {
-    // Logic for generating spaced repetition schedule
+    if (!uploadedFile) {
+      Alert.alert("No File Uploaded", "Please upload a PDF file before generating.");
+      return;
+    }
     console.log(`Generating ${questions} questions for ${days} days`);
+    console.log("Using file:", uploadedFile.name);
   };
 
   return (
