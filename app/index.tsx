@@ -5,7 +5,16 @@ import * as FileSystem from "expo-file-system";
 import axios from 'axios';
 import { useNavigation } from "@react-navigation/native";
 import QuestionPage from "./QuestionPage";
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
+type RootStackParamList = {
+  Home: undefined;
+  StatisticsPage: {
+    totalTime: string;
+    averageTime: string;
+    correctRatio: string;
+  };
+};
 
 export default function Index() {
   const [questions, setQuestions] = useState(0);
@@ -17,6 +26,9 @@ export default function Index() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [viewingFlashcards, setViewingFlashcards] = useState(false);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [startTime, setStartTime] = useState(Date.now());
+  const [performanceData, setPerformanceData] = useState<{ timeTaken: number; isCorrect: boolean }[]>([]);
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
   const handleFileUpload = async () => {
     try {
@@ -236,12 +248,56 @@ Each question should test understanding of key concepts from the document and ha
     setCurrentQuestionIndex(0);
   };
 
+
   const handleNextQuestion = () => {
-    setCurrentQuestionIndex((prevIndex) => Math.min(prevIndex + 1, apiResponse.questions.length - 1));
+    const timeTaken = (Date.now() - startTime) / 1000; // Time in seconds
+    const currentQuestion = apiResponse.questions[currentQuestionIndex];
+    const isCorrect = currentQuestion.correctAnswer === currentQuestion.selectedAnswer;
+
+    // Log the metrics for the current question
+    console.log(`Question ${currentQuestionIndex + 1} completed:`);
+    console.log(`Time Taken: ${timeTaken.toFixed(2)} seconds`);
+    console.log(`Correct: ${isCorrect ? "Yes" : "No"}`);
+
+    // Update performance data for the current question
+    setPerformanceData((prevData) => [
+      ...prevData,
+      { timeTaken, isCorrect },
+    ]);
+    if (currentQuestionIndex === apiResponse.questions.length - 1) {
+      // Ensure performance data is updated before calling handleFinishQuiz
+      console.log("Last question reached. Navigating to StatisticsPage...");
+      const updatedPerformanceData = [
+        ...performanceData,
+        { timeTaken, isCorrect },
+      ];
+      handleFinishQuiz(updatedPerformanceData);
+    } else {
+      // Move to the next question
+      setCurrentQuestionIndex((prevIndex) =>
+        Math.min(prevIndex + 1, apiResponse.questions.length - 1)
+      );
+      setStartTime(Date.now()); // Reset the start time for the next question
+    }
   };
 
   const handlePreviousQuestion = () => {
     setCurrentQuestionIndex((prevIndex) => Math.max(prevIndex - 1, 0));
+  };
+
+  const handleFinishQuiz = (performanceData: { timeTaken: number; isCorrect: boolean }[]) => {
+    const totalQuestions = performanceData.length;
+    const totalTime = performanceData.reduce((sum, p) => sum + p.timeTaken, 0);
+    const correctAnswers = performanceData.filter((p) => p.isCorrect).length;
+  
+    const averageTime = totalTime / totalQuestions;
+    const correctRatio = correctAnswers / totalQuestions;
+  
+    navigation.navigate("StatisticsPage", {
+      totalTime: totalTime.toFixed(2),
+      averageTime: averageTime.toFixed(2),
+      correctRatio: (correctRatio * 100).toFixed(2),
+    });
   };
 
   if (viewingFlashcards) {
@@ -255,6 +311,7 @@ Each question should test understanding of key concepts from the document and ha
       />
     );
   }
+
 
   return (
     <ScrollView contentContainerStyle={styles.scrollContainer}>
@@ -359,6 +416,8 @@ Each question should test understanding of key concepts from the document and ha
     </ScrollView>
   );
 }
+
+
 
 const styles = StyleSheet.create({
   scrollContainer: {
@@ -546,6 +605,7 @@ const styles = StyleSheet.create({
     borderRadius: 5,
   },
 });
+
 
 // TODO: Future implementation - Read from a .txt file
 // This function would extract text from a .txt file and use it as context

@@ -70,7 +70,7 @@ export default function QuestionPage({
       )}
       <View style={styles.navigationButtons}>
         <Button title="Previous" onPress={onPrevious} disabled={currentIndex === 0} />
-        <Button title="Next" onPress={onNext} disabled={currentIndex === totalQuestions - 1} />
+        <Button title="Next" onPress={onNext} />
       </View>
     </View>
   );
