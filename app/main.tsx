@@ -13,6 +13,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import Index from "./index"; // Import your existing Index component
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { useRouter } from 'expo-router';
 
 export type RootStackParamList = {
     Splash: undefined;
@@ -32,6 +33,8 @@ export default function Main() {
   const titleOpacity = useRef(new Animated.Value(0)).current;
   const buttonOpacity = useRef(new Animated.Value(0)).current;
   
+  const router = useRouter();
+  
   useEffect(() => {
     // Clean sequence of animations
     Animated.stagger(400, [
@@ -47,6 +50,10 @@ export default function Main() {
       })
     ]).start();
   }, []);
+
+  const openQuestionModal = () => {
+    router.push('/modal');
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -67,10 +74,10 @@ export default function Main() {
         <Animated.View style={{ opacity: buttonOpacity, width: '70%' }}>
           <TouchableOpacity
             style={styles.createDeckButton}
-            onPress={() => setModalVisible(true)}
+            onPress={openQuestionModal}
             activeOpacity={0.8}
           >
-            <Text style={styles.buttonText}>Create Deck</Text>
+            <Text style={styles.buttonText}>Open Question Generator</Text>
           </TouchableOpacity>
         </Animated.View>
       </View>
