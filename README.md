@@ -13,10 +13,6 @@ AstroLearn is a learning platform that helps users generate flashcards and quizz
 ## Table of Contents
 1. [Prerequisites](#prerequisites)
 2. [Setup Instructions](#setup-instructions)
-3. [Running the Application](#running-the-application)
-4. [Backend Setup](#backend-setup)
-5. [Project Structure](#project-structure)
-6. [Technologies Used](#technologies-used)
 
 ---
 
@@ -27,7 +23,7 @@ Before you begin, ensure you have the following installed:
 - **Python** (v3.9 or later)
 - **pip** (latest version)
 - **Expo CLI** (install via `npm install -g expo-cli`)
-- **PyTorch** (for backend, install via pip)
+- **fastAPI_ml (pip install -r requirements.txt)
 
 ---
 
@@ -43,7 +39,7 @@ npx expo start
 On another terminal
 ```bash
 cd Astrolearn/fastAPI_ml
-python3 nain.py
+python3 main.py
 ```
 
 Use ngrok for local testing: replace ngrok URL in StatisticsPage.tsx
