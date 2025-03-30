@@ -35,5 +35,15 @@ Before you begin, ensure you have the following installed:
 
 ### 1. Clone the Repository
 ```bash
-git clone https://github.com/your-username/astrolearn.git
-cd astrolearn
+git clone [https://github.com/your-username/astrolearn.git](https://github.com/MatthewPhan/AstroLearn.git)
+cd AstroLearn
+npm install
+npx expo start
+```
+On another terminal
+```bash
+cd Astrolearn/fastAPI_ml
+python3 nain.py
+```
+
+Use ngrok for local testing: replace ngrok URL in StatisticsPage.tsx
