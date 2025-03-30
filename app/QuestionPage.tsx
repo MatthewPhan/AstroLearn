@@ -16,6 +16,7 @@ interface QuestionPageProps {
   onPrevious: () => void;
   currentIndex: number;
   totalQuestions: number;
+  onAnswerCheck: (isCorrect: boolean) => void; // New prop
 }
 
 
@@ -25,6 +26,7 @@ export default function QuestionPage({
   onPrevious,
   currentIndex,
   totalQuestions,
+  onAnswerCheck,
 }: QuestionPageProps) {
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
 
@@ -34,11 +36,14 @@ export default function QuestionPage({
 
   const handleOptionSelect = (option: string) => {
     if (!selectedOption) {
-      setSelectedOption(option);
+      setSelectedOption(option); // Update local state
+      const isCorrect = option === question.correctAnswer;
+      onAnswerCheck(isCorrect); // Check if the answer is correct
     }
   };
 
   const isCorrect = selectedOption === question.correctAnswer;
+  console.log("isCorrect", isCorrect);
 
   return (
     <View style={styles.container}>
@@ -52,14 +57,11 @@ export default function QuestionPage({
             key={key}
             style={[
               styles.option,
-              selectedOption === key && styles.selectedOption,
-              selectedOption === key && (isCorrect ? styles.correctOption : styles.incorrectOption),
+              selectedOption === key && styles.selectedOption, // Highlight selected option
             ]}
-            onPress={() => handleOptionSelect(key)}
+            onPress={() => handleOptionSelect(key)} // Call handleOptionSelect with the option key
           >
-            <Text style={styles.optionText}>
-              {key}: {value}
-            </Text>
+            <Text style={styles.optionText}>{value}</Text>
           </TouchableOpacity>
         ))}
       </View>
@@ -131,3 +133,4 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
 });
+

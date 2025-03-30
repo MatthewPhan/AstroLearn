@@ -253,7 +253,8 @@ Each question should test understanding of key concepts from the document and ha
   const handleNextQuestion = () => {
     const timeTaken = (Date.now() - startTime) / 1000; // Time in seconds
     const currentQuestion = apiResponse.questions[currentQuestionIndex];
-    const isCorrect = currentQuestion.correctAnswer === currentQuestion.selectedAnswer;
+    console.log("Correct Answer:", currentQuestion.correctAnswer);
+    const isCorrect = currentQuestion.isCorrect;
 
     // Log the metrics for the current question
     console.log(`Question ${currentQuestionIndex + 1} completed:`);
@@ -301,15 +302,37 @@ Each question should test understanding of key concepts from the document and ha
     });
   };
 
+  const handleAnswerCheck = (isCorrect: boolean) => {
+    setApiResponse((prevApiResponse: { questions: { isCorrect?: boolean }[] } | null) => {
+      if (!prevApiResponse) return prevApiResponse;
+    
+      // Create a deep copy of the questions array
+      const updatedQuestions = [...prevApiResponse.questions];
+      updatedQuestions[currentQuestionIndex] = {
+      ...updatedQuestions[currentQuestionIndex],
+      isCorrect, // Update the correctness of the current question
+      };
+    
+      // Return a new apiResponse object with updated questions
+      return {
+      ...prevApiResponse,
+      questions: updatedQuestions,
+      };
+    });
+  
+    console.log(`Question ${currentQuestionIndex + 1}: ${isCorrect ? "Correct" : "Incorrect"}`);
+  };
+
   if (viewingFlashcards) {
     return (
       <QuestionPage
-        question={apiResponse.questions[currentQuestionIndex]}
-        onNext={handleNextQuestion}
-        onPrevious={handlePreviousQuestion}
-        currentIndex={currentQuestionIndex}
-        totalQuestions={apiResponse.questions.length}
-      />
+              question={apiResponse.questions[currentQuestionIndex]}
+              onNext={handleNextQuestion}
+              onPrevious={handlePreviousQuestion}
+              currentIndex={currentQuestionIndex}
+              totalQuestions={apiResponse.questions.length}
+              onAnswerCheck={handleAnswerCheck} 
+        />
     );
   }
 
