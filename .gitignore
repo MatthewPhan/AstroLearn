@@ -36,3 +36,22 @@ yarn-error.*
 *.tsbuildinfo
 
 app-example
+
+# General
+__pycache__/
+.DS_Store
+
+# Python Virtual Environment
+rl-env/
+rl-env/bin/
+rl-env/include/
+rl-env/lib/
+rl-env/share/
+rl-env/pyvenv.cfg
+
+# Compiled Python Files
+*.pyc
+*.pyo
+
+# IDE/Editor Specific
+.vscode/
