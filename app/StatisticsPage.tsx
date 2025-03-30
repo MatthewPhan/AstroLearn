@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { View, Text, StyleSheet, ScrollView, Dimensions, TouchableOpacity } from "react-native";
 import { useRoute, RouteProp, ParamListBase } from "@react-navigation/native";
-import { PieChart, BarChart } from "react-native-chart-kit";
+import { PieChart, BarChart, LineChart } from "react-native-chart-kit";
 import { useRouter } from "expo-router";
 import axios from "axios";
 import Svg, { Path, Circle, Text as SvgText } from 'react-native-svg';
@@ -26,8 +26,26 @@ export default function StatisticsPage() {
   const route = useRoute<StatisticsPageRouteProp>();
   const { totalTime, averageTime, correctRatio } = route.params;
   const [schedule, setSchedule] = useState<{ card_id: number; next_review_date: string }[] | null>(null);
+  const [recallDates, setRecallDates] = useState<string[]>([]);
+  const [memoryRetention, setMemoryRetention] = useState<number[]>([]);
+  const [idealRetention, setIdealRetention] = useState<number[]>([]);
+  const [forgettingCurve, setForgettingCurve] = useState<number[]>([]);
   const [error, setError] = useState<string | null>(null);
-  
+
+  const lineChartConfig = {
+    backgroundGradientFrom: "#ffffff",
+    backgroundGradientTo: "#ffffff",
+    color: (opacity = 1) => `rgba(66, 134, 244, ${opacity})`,
+    labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+    strokeWidth: 2, // Optional
+    decimalPlaces: 1, // Optional, for Y-axis values
+    propsForDots: {
+      r: "4",
+      strokeWidth: "2",
+      stroke: "#ffa726",
+    },
+  };
+
   const screenWidth = Dimensions.get("window").width - 40;
   
   // Extract optional params with fallbacks
@@ -110,8 +128,14 @@ export default function StatisticsPage() {
         avg_time: parseFloat(averageTime), // Convert to number
         correct_ratio: parseFloat(correctRatio) / 100, // Convert percentage to decimal
       });
+
+      setSchedule(response.data.schedule);
+      setRecallDates(response.data.recall_dates);
+      setMemoryRetention(response.data.memory_retention);
+      setIdealRetention(response.data.ideal_retention);
+      setForgettingCurve(response.data.forgetting_curve);
+      
       console.log("Data sent successfully:", response.data);
-      setSchedule(response.data.schedule); // Extract and set the schedule
     } catch (error: any) {
       console.error("Error sending data to backend:", error);
       if (error.response) {
@@ -207,20 +231,40 @@ export default function StatisticsPage() {
         </View>
         
         {/* Study Schedule */}
-        <View style={styles.scheduleContainer}>
-          <Text style={styles.scheduleTitle}>Personalized Study Plan:</Text>
-          {error && <Text style={styles.errorText}>{error}</Text>}
-          {schedule ? (
-            schedule.map((item) => (
-              <View key={item.card_id} style={styles.scheduleItem}>
-                <Text style={styles.scheduleItemTitle}>Card ID: {item.card_id}</Text>
-                <Text style={styles.scheduleItemDate}>Next Review: {item.next_review_date}</Text>
-              </View>
-            ))
-          ) : (
-            !error && <Text style={styles.loadingText}>Generating your personalized study plan...</Text>
-          )}
-        </View>
+        <ScrollView style={styles.container}>
+        <View style={styles.header}>
+        <Text style={styles.headerTitle}>Memory Retention Chart</Text>
+      </View>
+
+      <LineChart
+        data={{
+          labels: recallDates, // X-axis labels
+          datasets: [
+            {
+              data: memoryRetention, // Memory Retention curve
+              color: (opacity = 1) => `rgba(34, 202, 236, ${opacity})`, // Blue
+              strokeWidth: 2,
+            },
+            {
+              data: idealRetention, // Ideal Retention curve
+              color: (opacity = 1) => `rgba(34, 139, 34, ${opacity})`, // Green
+              strokeWidth: 2,
+            },
+            {
+              data: forgettingCurve, // Forgetting Curve
+              color: (opacity = 1) => `rgba(255, 99, 132, ${opacity})`, // Red
+              strokeWidth: 2,
+            },
+          ],
+          legend: ["Memory Retention", "Ideal Retrieval Practice", "Forgetting Curve"], // Legend
+        }}
+        width={screenWidth - 20} // Chart width
+        height={300} // Chart height
+        chartConfig={lineChartConfig}
+        bezier // Smooth curves
+        style={styles.chart}
+      />
+    </ScrollView>
         
         {/* Performance Insights */}
         <View style={styles.insightsContainer}>
@@ -267,6 +311,10 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
     backgroundColor: '#4285F4',
     alignItems: 'center',
+  },
+  chart: {
+    marginVertical: 8,
+    borderRadius: 16,
   },
   headerTitle: {
     fontSize: 24,
