@@ -23,7 +23,7 @@ Before you begin, ensure you have the following installed:
 - **Python** (v3.9 or later)
 - **pip** (latest version)
 - **Expo CLI** (install via `npm install -g expo-cli`)
-- **fastAPI_ml (pip install -r requirements.txt)
+- **fastAPI_ml** (pip install -r requirements.txt)
 
 ---
 
