@@ -4,7 +4,7 @@ import { useRoute, RouteProp, ParamListBase } from "@react-navigation/native";
 import { PieChart, BarChart, LineChart } from "react-native-chart-kit";
 import { useRouter } from "expo-router";
 import axios from "axios";
-import Svg, { Path, Circle, Text as SvgText } from 'react-native-svg';
+const NGROK_URL = "https://2166cb7087c2.ngrok.app/study-plan";
 
 // Define a param list type
 type RootStackParamList = {
@@ -59,31 +59,33 @@ export default function StatisticsPage() {
   // Data for pie chart
   const pieChartData = [
     {
-      name: "Correct",
+      name: "% Correct",
       population: scorePercent,
       color: "#4285F4",
       legendFontColor: "#7F7F7F",
       legendFontSize: 15
     },
     {
-      name: "Incorrect",
+      name: "% Incorrect",
       population: 100 - scorePercent,
       color: "#EA4335",
       legendFontColor: "#7F7F7F",
       legendFontSize: 15
     }
   ];
-  
+
+  const masteryScore = Math.max(1, Math.round((scorePercent / 100) * 10));
+
   // Data for time efficiency analysis (if we have question times)
   const timeEfficiencyData = questionTimes.length > 0 ? {
     labels: ["Very Fast", "Fast", "Average", "Slow", "Very Slow"],
     datasets: [{
       data: [
-        questionTimes.filter(t => t < parseFloat(averageTime) * 0.5).length,
-        questionTimes.filter(t => t >= parseFloat(averageTime) * 0.5 && t < parseFloat(averageTime) * 0.8).length,
-        questionTimes.filter(t => t >= parseFloat(averageTime) * 0.8 && t < parseFloat(averageTime) * 1.2).length,
-        questionTimes.filter(t => t >= parseFloat(averageTime) * 1.2 && t < parseFloat(averageTime) * 1.5).length,
-        questionTimes.filter(t => t >= parseFloat(averageTime) * 1.5).length
+        questionTimes.filter((t: number) => t < parseFloat(averageTime) * 0.5).length,
+        questionTimes.filter((t: number) => t >= parseFloat(averageTime) * 0.5 && t < parseFloat(averageTime) * 0.8).length,
+        questionTimes.filter((t: number) => t >= parseFloat(averageTime) * 0.8 && t < parseFloat(averageTime) * 1.2).length,
+        questionTimes.filter((t: number) => t >= parseFloat(averageTime) * 1.2 && t < parseFloat(averageTime) * 1.5).length,
+        questionTimes.filter((t: number) => t >= parseFloat(averageTime) * 1.5).length
       ]
     }]
   } : {
@@ -124,7 +126,7 @@ export default function StatisticsPage() {
 
   const sendStatisticsToBackend = async () => {
     try {
-      const response = await axios.post("https://7049a0a8d03f.ngrok.app/study-plan", {
+      const response = await axios.post(NGROK_URL, {
         avg_time: parseFloat(averageTime), // Convert to number
         correct_ratio: parseFloat(correctRatio) / 100, // Convert percentage to decimal
       });
@@ -161,40 +163,20 @@ export default function StatisticsPage() {
       <View style={styles.container}>
         {/* Score Card with Gauge Chart */}
         <View style={styles.scoreCard}>
-          <Text style={styles.scoreLabel}>Accuracy</Text>
+          <Text style={styles.scoreLabel}>Mastery Score</Text>
           
-          {/* Gauge Chart */}
-          <View style={styles.gaugeContainer}>
-            <Svg height="160" width="160" viewBox="0 0 180 90">
-              {/* Background Arc */}
-              <Path
-                d="M 10 90 A 80 80 0 0 1 170 90"
-                stroke="#E8EAED"
-                strokeWidth="16"
-                fill="none"
-              />
-              {/* Colored Progress Arc */}
-              <Path
-                d={`M 10 90 A 80 80 0 ${scorePercent > 50 ? 1 : 0} 1 ${
-                  10 + 160 * (scorePercent / 100)
-                } ${90 - Math.sin((Math.PI * scorePercent) / 100) * 80}`}
-                stroke={performanceStatus.color}
-                strokeWidth="16"
-                fill="none"
-                strokeLinecap="round"
-              />
-              {/* Center Text */}
-              <SvgText
-                x="90"
-                y="70"
-                fontSize="24"
-                fontWeight="bold"
-                fill="#333"
-                textAnchor="middle"
-              >
-                {correctRatio}
-              </SvgText>
-            </Svg>
+          {/* Rectangle Progress Bar */}
+          <View style={styles.progressBarBackground}>
+            <View
+              style={[
+                styles.progressBarFill,
+                { width: `${(masteryScore / 10) * 100}%`, backgroundColor: performanceStatus.color },
+              ]}
+            />
+          </View>
+          
+          <Text style={styles.masteryScoreText}>{`${masteryScore}/10`}</Text>
+
           </View>
           
           <Text style={[styles.performanceStatus, { color: performanceStatus.color }]}>
@@ -260,9 +242,20 @@ export default function StatisticsPage() {
         }}
         width={screenWidth - 20} // Chart width
         height={300} // Chart height
-        chartConfig={lineChartConfig}
+        chartConfig={{
+          ...lineChartConfig,
+          propsForLabels: {
+            fontSize: 10, // Reduce font size for labels
+          },
+        }}
+        xLabelsOffset={-10} // Adjust X-axis label position
+        yLabelsOffset={10} // Adjust Y-axis label position
+        horizontalLabelRotation={-45} // Rotate X-axis labels
         bezier // Smooth curves
-        style={styles.chart}
+        style={{
+          marginVertical: 8,
+          borderRadius: 16,
+        }}
       />
     </ScrollView>
         
@@ -296,7 +289,6 @@ export default function StatisticsPage() {
         >
           <Text style={styles.buttonText}>Back to Main</Text>
         </TouchableOpacity>
-      </View>
     </ScrollView>
   );
 }
@@ -505,5 +497,23 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
     color: '#333',
+  },
+  progressBarBackground: {
+    width: '100%',
+    height: 20,
+    backgroundColor: '#E8EAED',
+    borderRadius: 10,
+    overflow: 'hidden',
+    marginVertical: 8,
+  },
+  progressBarFill: {
+    height: '100%',
+    borderRadius: 10,
+  },
+  masteryScoreText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+    marginTop: 8,
   },
 });

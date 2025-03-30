@@ -385,7 +385,7 @@ Each question should test understanding of key concepts from the document and ha
           </Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.viewButton} onPress={handleViewFlashcards}>
+        <TouchableOpacity style={[styles.viewButton,{ marginTop: 16 }]} onPress={handleViewFlashcards}>
           <Text style={styles.buttonText}>View Flashcards</Text>
         </TouchableOpacity>
         
